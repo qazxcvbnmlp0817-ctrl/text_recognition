@@ -99,7 +99,7 @@ class DrawingCanvas:
                             fill=0)
 
     def get_array(self):
-        """Return a 28x28 numpy array (0–255) of the current drawing."""
+        """Return a 28x28 numpy array (0-255) of the current drawing."""
         small = self.image.resize((self.MODEL_SIZE, self.MODEL_SIZE),
                                   Image.LANCZOS)
         return np.array(small)
@@ -123,7 +123,7 @@ class App:
         tk.Label(self.root, text="Handwritten Digit Recognition",
                  font=('Arial', 14, 'bold')).pack(pady=(12, 4))
         tk.Label(self.root,
-                 text="Draw a digit (0–9) in the box below",
+                 text="Draw a digit (0-9) in the box below",
                  font=('Arial', 10)).pack()
 
         # Drawing area
