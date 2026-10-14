@@ -1,0 +1,230 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --gap: 12px;
+  --radius: 6px;
+  --color-work: #2563eb;
+  --color-personal: #16a34a;
+  --color-study: #9333ea;
+  --color-overdue: #dc2626;
+  --color-border: #d1d5db;
+  --color-muted: #6b7280;
+}
+
+body {
+  font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--gap);
+  color: #111827;
+}
+
+.error-banner {
+  background: #fef2f2;
+  border: 1px solid var(--color-overdue);
+  color: var(--color-overdue);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  margin-bottom: var(--gap);
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--gap);
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.today-label {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.progress-section {
+  margin-bottom: var(--gap);
+}
+
+.progress-label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.progress-bar {
+  background: #e5e7eb;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  background: var(--color-work);
+  height: 100%;
+}
+
+.progress-empty {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.add-form {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.add-form input[type="text"] {
+  flex: 1;
+}
+
+.add-form input,
+.add-form select,
+.add-form button {
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+}
+
+.add-form button {
+  background: var(--color-work);
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.field-error {
+  color: var(--color-overdue);
+  font-size: 0.8rem;
+  margin: 2px 0 var(--gap);
+}
+
+.field-invalid {
+  border-color: var(--color-overdue) !important;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--gap);
+}
+
+.filter-tab {
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.filter-tab--active {
+  background: var(--color-work);
+  color: white;
+  border-color: var(--color-work);
+}
+
+.group-header {
+  font-size: 0.95rem;
+  margin: var(--gap) 0 6px;
+  color: var(--color-muted);
+}
+
+.group-overdue {
+  color: var(--color-overdue);
+}
+
+.group-list {
+  list-style: none;
+  margin: 0 0 var(--gap);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.todo-row--done .todo-title {
+  text-decoration: line-through;
+  color: var(--color-muted);
+}
+
+.todo-title {
+  flex: 1;
+}
+
+.todo-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: white;
+}
+
+.todo-badge--work {
+  background: var(--color-work);
+}
+
+.todo-badge--personal {
+  background: var(--color-personal);
+}
+
+.todo-badge--study {
+  background: var(--color-study);
+}
+
+.todo-due {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  min-width: 48px;
+  text-align: right;
+}
+
+.todo-action {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 4px;
+}
+
+.todo-row--editing {
+  flex-wrap: wrap;
+}
+
+.todo-row--editing input,
+.todo-row--editing select {
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+
+.todo-edit-title {
+  flex: 1;
+  min-width: 100px;
+}
+
+.todo-action--save {
+  color: var(--color-personal);
+}
+
+.todo-action--delete,
+.todo-action--cancel {
+  color: var(--color-overdue);
+}

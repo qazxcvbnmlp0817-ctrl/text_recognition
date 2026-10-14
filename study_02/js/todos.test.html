@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>todos.js 테스트</title>
+  <style>
+    body { font-family: monospace; padding: 16px; }
+    .pass { color: #16a34a; }
+    .fail { color: #dc2626; font-weight: bold; }
+    #summary { font-size: 1.1rem; margin-top: 16px; }
+    li { margin-bottom: 2px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>todos.js 순수 함수 테스트</h1>
+  <ul id="results"></ul>
+  <div id="summary"></div>
+
+  <script src="todos.js"></script>
+  <script>
+    const resultsEl = document.getElementById("results");
+    let pass = 0;
+    let fail = 0;
+
+    function assertEqual(actual, expected, label) {
+      const a = JSON.stringify(actual);
+      const e = JSON.stringify(expected);
+      const li = document.createElement("li");
+      if (a === e) {
+        pass++;
+        li.className = "pass";
+        li.textContent = `PASS: ${label}`;
+      } else {
+        fail++;
+        li.className = "fail";
+        li.textContent = `FAIL: ${label}\n  expected: ${e}\n  actual:   ${a}`;
+      }
+      resultsEl.appendChild(li);
+    }
+
+    // ---- createTodo ----
+    (function testCreateTodo() {
+      const t = Todos.createTodo("DB 3장 복습", "study", "2026-10-14");
+      assertEqual(t.title, "DB 3장 복습", "createTodo: sets title");
+      assertEqual(t.category, "study", "createTodo: sets category");
+      assertEqual(t.dueDate, "2026-10-14", "createTodo: sets dueDate");
+      assertEqual(t.done, false, "createTodo: done defaults to false");
+      assertEqual(typeof t.id === "string" && t.id.length > 0, true, "createTodo: has non-empty id");
+      assertEqual(typeof t.createdAt === "string", true, "createTodo: has createdAt string");
+
+      assertEqual(Todos.createTodo("", "work", null), null, "createTodo: rejects empty title");
+      assertEqual(Todos.createTodo("   ", "work", null), null, "createTodo: rejects whitespace-only title");
+      assertEqual(Todos.createTodo("a".repeat(101), "work", null), null, "createTodo: rejects title over 100 chars");
+      assertEqual(Todos.createTodo("a".repeat(100), "work", null) !== null, true, "createTodo: accepts title at exactly 100 chars");
+      assertEqual(Todos.createTodo("날짜 없음", "work", null).dueDate, null, "createTodo: allows null dueDate");
+    })();
+
+    // ---- toggleTodo / updateTodo / deleteTodo ----
+    (function testMutators() {
+      const base = [
+        { id: "1", title: "A", category: "work", dueDate: null, done: false, createdAt: "t1" },
+        { id: "2", title: "B", category: "personal", dueDate: null, done: false, createdAt: "t2" },
+      ];
+
+      const toggled = Todos.toggleTodo(base, "1");
+      assertEqual(toggled[0].done, true, "toggleTodo: flips done on matching id");
+      assertEqual(toggled[1].done, false, "toggleTodo: leaves other items untouched");
+      assertEqual(base[0].done, false, "toggleTodo: does not mutate original array");
+
+      const toggledBack = Todos.toggleTodo(toggled, "1");
+      assertEqual(toggledBack[0].done, false, "toggleTodo: flips back to false on second call");
+
+      const updated = Todos.updateTodo(base, "2", { title: "B2", category: "study" });
+      assertEqual(updated[1].title, "B2", "updateTodo: applies title change");
+      assertEqual(updated[1].category, "study", "updateTodo: applies category change");
+      assertEqual(updated[1].dueDate, null, "updateTodo: leaves unspecified fields unchanged");
+      assertEqual(base[1].title, "B", "updateTodo: does not mutate original array");
+
+      const deleted = Todos.deleteTodo(base, "1");
+      assertEqual(deleted.length, 1, "deleteTodo: removes matching id");
+      assertEqual(deleted[0].id, "2", "deleteTodo: keeps the other item");
+      assertEqual(base.length, 2, "deleteTodo: does not mutate original array");
+    })();
+
+    // ---- groupByDueDate ----
+    // 2026-10-14 is a Wednesday; this week's Sunday is 2026-10-18.
+    (function testGroupByDueDate() {
+      const mk = (id, dueDate) => ({ id, title: id, category: "work", dueDate, done: false, createdAt: "t" });
+      const todos = [
+        mk("yesterday", "2026-10-13"),
+        mk("today", "2026-10-14"),
+        mk("tomorrow", "2026-10-15"),
+        mk("sunday", "2026-10-18"),
+        mk("nextMonday", "2026-10-19"),
+        mk("noDate", null),
+      ];
+      const g = Todos.groupByDueDate(todos, "2026-10-14");
+      assertEqual(g.overdue.map((t) => t.id), ["yesterday"], "groupByDueDate: yesterday is overdue");
+      assertEqual(g.today.map((t) => t.id), ["today"], "groupByDueDate: today's date goes in today");
+      assertEqual(g.thisWeek.map((t) => t.id), ["tomorrow", "sunday"], "groupByDueDate: tomorrow..this-week-Sunday go in thisWeek (inclusive)");
+      assertEqual(g.later.map((t) => t.id), ["nextMonday"], "groupByDueDate: next Monday is later");
+      assertEqual(g.noDate.map((t) => t.id), ["noDate"], "groupByDueDate: null dueDate goes in noDate");
+
+      const reordered = [mk("b", "2026-10-15"), mk("a", "2026-10-16")];
+      const g2 = Todos.groupByDueDate(reordered, "2026-10-14");
+      assertEqual(g2.thisWeek.map((t) => t.id), ["b", "a"], "groupByDueDate: preserves original order within a group");
+
+      const sundayToday = [mk("nextDay", "2026-10-19")];
+      const g3 = Todos.groupByDueDate(sundayToday, "2026-10-18");
+      assertEqual(g3.thisWeek.map((t) => t.id), [], "groupByDueDate: when today is Sunday, thisWeek is empty");
+      assertEqual(g3.later.map((t) => t.id), ["nextDay"], "groupByDueDate: day after a Sunday-today is later");
+    })();
+
+    // ---- calculateProgress ----
+    (function testCalculateProgress() {
+      const mk = (id, dueDate, done) => ({ id, title: id, category: "work", dueDate, done, createdAt: "t" });
+
+      const mixed = [
+        mk("overdueDone", "2026-10-12", true),
+        mk("overdueNotDone", "2026-10-13", false),
+        mk("todayDone", "2026-10-14", true),
+        mk("future", "2026-10-20", false),
+        mk("noDate", null, false),
+      ];
+      assertEqual(Todos.calculateProgress(mixed, "2026-10-14"), { done: 2, total: 3 }, "calculateProgress: counts overdue+today, excludes future and no-date");
+      assertEqual(Todos.calculateProgress([mk("future", "2026-10-20", false)], "2026-10-14"), { done: 0, total: 0 }, "calculateProgress: total is 0 when nothing is due yet");
+      assertEqual(Todos.calculateProgress([], "2026-10-14"), { done: 0, total: 0 }, "calculateProgress: empty list gives 0/0");
+    })();
+
+    // ---- filterByCategory ----
+    (function testFilterByCategory() {
+      const mk = (id, category) => ({ id, title: id, category, dueDate: null, done: false, createdAt: "t" });
+      const todos = [mk("w", "work"), mk("p", "personal"), mk("s", "study")];
+      assertEqual(Todos.filterByCategory(todos, "all").map((t) => t.id), ["w", "p", "s"], "filterByCategory: 'all' returns everything");
+      assertEqual(Todos.filterByCategory(todos, "work").map((t) => t.id), ["w"], "filterByCategory: filters to a single category");
+      assertEqual(Todos.filterByCategory(todos, "personal").map((t) => t.id), ["p"], "filterByCategory: filters to another category");
+    })();
+
+    document.getElementById("summary").textContent = `${pass} passed, ${fail} failed`;
+    document.getElementById("summary").className = fail > 0 ? "fail" : "pass";
+  </script>
+</body>
+</html>

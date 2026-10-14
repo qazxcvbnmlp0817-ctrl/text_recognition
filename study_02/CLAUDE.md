@@ -8,7 +8,7 @@ A personal todo app for managing ~10-20 tasks per day. Runs directly in the brow
 
 Full requirements and rationale live in `PRD.md`. Implementation is broken into five ordered steps in `prompts.md` — follow that order; later steps assume earlier modules exist (e.g. `render.js` depends on `todos.js`'s pure functions, `app.js` wires all three together).
 
-**Current status:** only `PRD.md` and `prompts.md` exist — no application code has been written yet. When implementing, work through `prompts.md` step by step rather than building everything at once.
+**Current status:** implemented, following `prompts.md`'s five steps.
 
 ## Commands
 
@@ -21,9 +21,9 @@ Vanilla HTML/CSS/JavaScript only — no frameworks, no build tools, no package m
 
 ## Architecture
 
-Four scripts, loaded in this order from `index.html`, each exposing its functions on a global namespace object (`Storage`, `Todos`, `Render`) since there are no ES module imports:
+Four scripts, loaded in this order from `index.html`, each exposing its functions on a global namespace object (`TodoStorage`, `Todos`, `Render`) since there are no ES module imports. `storage.js` uses `TodoStorage` rather than `Storage` to avoid shadowing the browser's built-in `window.Storage` interface.
 
-- `js/storage.js` — `localStorage` read/write only. Owns the `todoApp.v1` key and the `{version, todos}` envelope. Never throws on corrupt/missing data — returns an empty list and logs instead.
+- `js/storage.js` — `localStorage` read/write only. Owns the `todoApp.v1` key and the `{version, todos}` envelope. Never throws on corrupt/missing data — returns an empty list and logs a `console.warn` instead (`app.js` detects these warnings to show the error banner, without `storage.js` needing to know about the UI).
 - `js/todos.js` — pure functions only (no DOM, no `localStorage`): create/update/delete/toggle a todo, group todos by due date (overdue/today/this week/later/no date), and compute progress. Because these are pure, they're the thing `todos.test.html` exercises directly.
 - `js/render.js` — DOM rendering only. Takes state in, writes DOM out, never mutates state and never attaches event listeners (that's `app.js`'s job). Interactive elements get `data-id` attributes so `app.js` can bind via event delegation.
 - `js/app.js` — the only stateful module. Holds `state` (`todos`, `activeCategory`, `editingId`), wires up DOM events, and is the only place that calls both `todos.js` (compute) and `storage.js` (persist) before asking `render.js` to redraw.
