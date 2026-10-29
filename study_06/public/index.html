@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>냉장고 셰프</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="brand"><button type="button" class="brand-btn" data-nav="main">🧊 냉장고 셰프</button></h1>
+    <div class="header-actions">
+      <div class="menu-wrap">
+        <button id="profile-btn" type="button" class="btn btn-small" aria-haspopup="true" aria-expanded="false" aria-controls="profile-menu"></button>
+        <div id="profile-menu" class="menu" hidden></div>
+      </div>
+      <button id="saved-btn" type="button" class="btn btn-small" data-nav="saved" aria-label="저장한 레시피">♡ <span id="saved-count">0</span></button>
+    </div>
+  </header>
+
+  <div id="storage-banner" class="banner container-narrow" role="alert" hidden></div>
+
+  <main id="view-main" class="container view">
+    <section id="onboarding" class="card onboarding" hidden>
+      <p>프로필을 만들면 <b>알레르기와 식단을 반영</b>하고 마음에 드는 <b>레시피를 저장</b>할 수 있어요.</p>
+      <div class="button-row">
+        <button type="button" class="btn btn-primary" data-action="new-profile">프로필 만들기</button>
+        <button id="onboarding-later" type="button" class="btn">나중에</button>
+      </div>
+    </section>
+
+    <!-- 1단계: 사진 입력 -->
+    <section class="card" aria-labelledby="upload-title">
+      <h2 id="upload-title" class="card-title"><span class="step">1</span> 냉장고 사진 올리기</h2>
+
+      <div id="dropzone" class="dropzone">
+        <img id="preview" class="preview" alt="올린 냉장고 사진 미리보기" hidden>
+        <div id="drop-guide" class="drop-guide">
+          <p class="drop-icon" aria-hidden="true">📷</p>
+          <p>냉장고 사진을 여기로 끌어다 놓거나</p>
+          <div class="button-row center">
+            <label class="btn">
+              사진 선택
+              <input id="file-input" type="file" accept="image/*" class="sr-only">
+            </label>
+            <label class="btn">
+              카메라로 찍기
+              <input id="camera-input" type="file" accept="image/*" capture="environment" class="sr-only">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button id="change-photo-btn" type="button" class="btn" hidden>다른 사진</button>
+        <button id="recognize-btn" type="button" class="btn btn-primary grow" disabled>재료 인식하기</button>
+      </div>
+      <p id="upload-status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 1단계: 인식된 재료 -->
+    <section id="ingredients-card" class="card" aria-labelledby="ingredients-title" hidden>
+      <h2 id="ingredients-title" class="card-title">인식된 재료 <span id="ingredient-count" class="count">0</span></h2>
+      <p class="hint">재료를 누르면 이번 추천에서 빼거나 다시 넣을 수 있고, ✎로 이름을 고칠 수 있어요. 점선 테두리에 <span class="chip-sample">당근?</span>처럼 물음표가 붙은 재료는 AI가 확실하지 않은 재료예요.</p>
+      <div id="ingredient-groups" class="ingredient-groups"></div>
+      <p id="empty-ingredients" class="empty" hidden>재료를 찾지 못했어요. 더 밝게, 가까이 찍어 보거나 아래에서 직접 추가해 주세요.</p>
+
+      <form id="add-form" class="add-form">
+        <label for="add-name" class="sr-only">추가할 재료 이름</label>
+        <input id="add-name" type="text" maxlength="30" placeholder="재료 직접 추가 (예: 버섯)" autocomplete="off">
+        <label for="add-category" class="sr-only">분류</label>
+        <select id="add-category"></select>
+        <button type="submit" class="btn">추가</button>
+      </form>
+      <p id="notes" class="notes" hidden></p>
+    </section>
+
+    <!-- 2단계: 추천 조건 -->
+    <section id="options-card" class="card" aria-labelledby="options-title" hidden>
+      <h2 id="options-title" class="card-title"><span class="step">2</span> 레시피 추천받기</h2>
+      <div class="options-grid">
+        <label class="field">인분
+          <select id="opt-servings">
+            <option value="1">1인분</option>
+            <option value="2" selected>2인분</option>
+            <option value="3">3인분</option>
+            <option value="4">4인분</option>
+          </select>
+        </label>
+        <label class="field">조리 시간
+          <select id="opt-time">
+            <option value="">상관없음</option>
+            <option value="15">15분 이내</option>
+            <option value="30" selected>30분 이내</option>
+            <option value="60">60분 이내</option>
+          </select>
+        </label>
+        <label class="field">난이도
+          <select id="opt-difficulty">
+            <option value="">상관없음</option>
+            <option value="easy" selected>쉬움</option>
+            <option value="medium">보통</option>
+          </select>
+        </label>
+        <label class="field">요리 종류
+          <select id="opt-cuisine">
+            <option value="">상관없음</option>
+            <option value="한식">한식</option>
+            <option value="양식">양식</option>
+            <option value="중식">중식</option>
+            <option value="일식">일식</option>
+          </select>
+        </label>
+      </div>
+      <p id="profile-info" class="hint profile-info" hidden></p>
+      <p id="pantry-info" class="hint pantry-info"></p>
+      <p id="selected-info" class="hint"></p>
+      <button id="to-recipes-btn" type="button" class="btn btn-primary btn-large">레시피 추천받기</button>
+      <p id="recipe-status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 2단계: 추천 결과 -->
+    <section id="recipes-card" class="card" aria-labelledby="recipes-title" hidden>
+      <h2 id="recipes-title" class="card-title" tabindex="-1">추천 레시피</h2>
+      <div id="recipe-list" class="recipe-list"></div>
+      <button id="more-recipes-btn" type="button" class="btn btn-large">다른 레시피 추천</button>
+      <p class="disclaimer">AI가 만든 레시피예요. 조리 시간과 양은 상황에 맞게 조절하세요.</p>
+    </section>
+  </main>
+
+  <!-- 3단계: 프로필 편집 -->
+  <main id="view-profile" class="container view" hidden>
+    <section class="card" aria-labelledby="profile-form-title">
+      <h2 id="profile-form-title" class="card-title" tabindex="-1">새 프로필</h2>
+      <div id="profile-form-body"></div>
+    </section>
+  </main>
+
+  <!-- 3단계: 저장한 레시피 -->
+  <main id="view-saved" class="container view" hidden>
+    <section class="card" aria-labelledby="saved-title">
+      <h2 id="saved-title" class="card-title" tabindex="-1">♡ 저장한 레시피 <span id="saved-list-count" class="count">0</span></h2>
+      <div class="saved-tools">
+        <label class="sr-only" for="saved-search">이름이나 재료로 검색</label>
+        <input id="saved-search" type="search" placeholder="🔍 이름, 재료, 메모로 검색" autocomplete="off">
+        <label class="sr-only" for="saved-sort">정렬</label>
+        <select id="saved-sort">
+          <option value="recent">최근 저장순</option>
+          <option value="rating">별점순</option>
+          <option value="time">조리 시간순</option>
+        </select>
+      </div>
+      <div id="saved-list" class="saved-list"></div>
+      <p id="saved-empty" class="empty" hidden></p>
+      <div class="button-row backup-row">
+        <button id="export-btn" type="button" class="btn btn-small">내보내기 (JSON)</button>
+        <label class="btn btn-small">가져오기
+          <input id="import-input" type="file" accept="application/json,.json" class="sr-only">
+        </label>
+      </div>
+      <div id="import-panel" class="import-panel" hidden></div>
+    </section>
+  </main>
+
+  <dialog id="recipe-dialog" class="recipe-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-head">
+      <h2 id="dialog-title"></h2>
+      <button id="dialog-close" type="button" class="icon-btn" aria-label="닫기">✕</button>
+    </div>
+    <div id="dialog-actions" class="dialog-actions"></div>
+    <div id="dialog-body" class="dialog-body"></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="js/image.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/recipes.js"></script>
+  <script src="js/profiles.js"></script>
+  <script src="js/saved.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/profileView.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
